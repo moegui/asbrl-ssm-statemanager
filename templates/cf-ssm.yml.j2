@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+
+  Prefix:
+    Type: String
+  ClusterName:
+    Type: String
+{% for z in range(0,ASSOCIATION|length) %}
+{% if ASSOCIATION[z].DOCUMENT_NAME == 'AWS-ApplyAnsiblePlaybooks' %}
+  S3TemplateAnsible:
+    Type: String
+{% break %}
+{% endif %}
+{% endfor %}
+  Build:
+    Type: String
+  SystemsManagerTimeout:
+    Type: Number
+    
+Resources:
+
+  SSMOutputBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      Tags: 
+        - Key: ClusterName  
+          Value: !Ref ClusterName
+        - Key: Release
+          Value: {{TAGS.RELEASE}}
+        - Key: Environment
+          Value: {{TAGS.ENVIRONMENT_TYPE}} 
+
+{% for z in range(0,ASSOCIATION|length) %}
+  Association{{ASSOCIATION[z].NAME}}:
+    Type: AWS::SSM::Association
+    Properties:
+      AssociationName: !Sub "${Prefix}-${ClusterName}-ssm-{{ASSOCIATION[z].NAME|lower}}"
+      Name: {{ASSOCIATION[z].DOCUMENT_NAME}}
+      Targets:
+      - Key: tag:ClusterName  
+        Values: 
+          - !Ref "ClusterName"
+      Parameters:
+        SourceType:
+        - '{{ASSOCIATION[z].PARAMETERS.SOURCE_TYPE}}'
+        SourceInfo:
+        - Fn::Sub: '{"path":"${S3TemplateAnsible}"}'
+        InstallDependencies:
+        - '{{ASSOCIATION[z].PARAMETERS.INSTALL_DEPENDENCIES}}'
+        PlaybookFile:
+        - '{{ASSOCIATION[z].PARAMETERS.PLAYBOOK_FILE}}'
+        ExtraVariables:
+        - Fn::Join:
+          - ' '
+          - - 'SSM=True'
+{% for y in range(0,ASSOCIATION[z].PARAMETERS.EXTRA_VARS|length) %}
+            - Fn::Sub: "{{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y]}}"
+{% endfor %}
+        Check:
+        - '{{ASSOCIATION[z].PARAMETERS.CHECK}}'
+        Verbose:
+        - '{{ASSOCIATION[z].PARAMETERS.VERBOSE}}'
+      OutputLocation:
+        S3Location: 
+          OutputS3BucketName: !Ref "SSMOutputBucket"
+          OutputS3KeyPrefix: "{{ASSOCIATION[z].NAME}}Association"
+          OutputS3Region: !Ref "AWS::Region"
+      WaitForSuccessTimeoutSeconds: !Ref "SystemsManagerTimeout"
+{% endfor %}
+
+

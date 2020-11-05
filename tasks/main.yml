@@ -1,0 +1,7 @@
+---
+    - name: Generate CF SSM
+      template:
+        src: "cf-ssm.yml.j2"
+        dest: "{{ TEMPLATE_DEST }}"
+        trim_blocks: true
+        mode: 0644
