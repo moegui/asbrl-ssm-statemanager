@@ -41,6 +41,10 @@ Resources:
       - Key: tag:ClusterName  
         Values: 
           - !Ref "ClusterName"
+{% for y in range(0,ASSOCIATION[z].EXTRA_TARGETS|length) %}
+      - Key: {{ASSOCIATION[z].EXTRA_TARGETS[y].KEY}}
+        Values: 
+        {{ASSOCIATION[z].EXTRA_TARGETS[y].VALUES|to_nice_yaml}}{% endfor %}
       Parameters:
         SourceType:
         - '{{ASSOCIATION[z].PARAMETERS.SOURCE_TYPE}}'
@@ -68,5 +72,3 @@ Resources:
           OutputS3Region: !Ref "AWS::Region"
       WaitForSuccessTimeoutSeconds: !Ref "SystemsManagerTimeout"
 {% endfor %}
-
-
