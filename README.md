@@ -26,7 +26,7 @@ Role Variables
     - SOURCE_TYPE: (String)
     - INSTALL_DEPENDENCIES: (Boolean)
     - PLAYBOOK_FILE: (String)
-     -EXTRA_VARS: (List)
+    - EXTRA_VARS: (List)
       - KEY: (String)
       - VALUE: (String) (Allow CloudFormation variables)
       - SUBVALUE: (String Optional) (Allow CloudFormation variables. Used when you need to use an intrinsic function in the VALUE, like Fn::ImportValue)
