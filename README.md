@@ -26,8 +26,10 @@ Role Variables
     - SOURCE_TYPE: (String)
     - INSTALL_DEPENDENCIES: (Boolean)
     - PLAYBOOK_FILE: (String)
-     -EXTRA_VARS: (List)(Allow CloudFormation variables)
-      - REGION=${AWS::Region}
+     -EXTRA_VARS: (List)
+      - KEY: (String)
+      - VALUE: (String) (Allow CloudFormation variables)
+      - SUBVALUE: (String Optional) (Allow CloudFormation variables. Used when you need to use an intrinsic function in the VALUE, like Fn::ImportValue)
     - CHECK: (Boolean)
     - VERBOSE: (String)
             
@@ -40,34 +42,28 @@ Example Playbook
 ----------------
 
           
-      - name: Generate {{EnvironmentType}} cf-ssm
-        include_role:
-          name: asbrl-ssm-statemanager
-        vars:
-          TEMPLATE_DEST: ./artifacts/{{EnvironmentType}}/cf-rabbitstack-ssm.yml
-          TAGS:
-            RELEASE: "{{Release}}"
-            ENVIRONMENT_TYPE: "{{EnvironmentType}}"
-          ASSOCIATION:
-          - NAME: RabbitNodeV01
-            EXTRA_TARGETS:
-            DOCUMENT_NAME: AWS-ApplyAnsiblePlaybooks
-            PARAMETERS:
-              SOURCE_TYPE: S3
-              INSTALL_DEPENDENCIES: False
-              PLAYBOOK_FILE: deploy-node.yml
-              EXTRA_VARS:
-              - BUILD=${Build}
-              - REGION=${AWS::Region}
-              - LOGS_GROUP_NAME=${Prefix}-${ClusterName}
-              - METRICS_NAMESPACE=${Prefix}-${ClusterName}
-              - CLUSTER_NAME=${ClusterName}
-              - PREFIX=${Prefix}
-              - ACCOUNT_ID=${AWS::AccountId}
-              - DISCOVERY=rabbit_peer_discovery_aws
-              - USE_LONGNAME=true
-              CHECK: False
-              VERBOSE: -v
+      - NAME: MasterNode{{ReleaseName}}
+        EXTRA_TARGETS:
+        - KEY: tag:ES-MASTER
+          VALUES:
+          - true
+        DOCUMENT_NAME: AWS-ApplyAnsiblePlaybooks
+        PARAMETERS:
+          SOURCE_TYPE: S3
+          INSTALL_DEPENDENCIES: False
+          PLAYBOOK_FILE: deploy-node-prod.yml
+          EXTRA_VARS:
+          - KEY: DISCOVERY_SEED_PROVIDERS
+            VALUE: ec2
+          - KEY: DISCOVERY_EC2_TAG_NAME
+            VALUE: ClusterName
+          - KEY: DISCOVERY_EC2_TAG_VALUE
+            VALUE: ${ClusterName}
+          - KEY: CODEBUILD_BUCKET
+            VALUE: BucketName
+            SUBVALUE: "Fn::ImportValue: !Sub ${ClusterName}-ArtifactsBucket"
+          CHECK: False
+          VERBOSE: -v
             
 License
 -------
