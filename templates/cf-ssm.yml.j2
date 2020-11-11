@@ -57,9 +57,16 @@ Resources:
         ExtraVariables:
         - Fn::Join:
           - ' '
-          - - 'SSM=True'
+          - - SSM=True
 {% for y in range(0,ASSOCIATION[z].PARAMETERS.EXTRA_VARS|length) %}
-            - Fn::Sub: "{{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y]}}"
+{% if ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].SUBVALUE is not defined %}
+            - Fn::Sub: {{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].KEY}}={{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].VALUE}}
+{% else %}
+            - Fn::Sub:
+              - {{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].KEY}}=${ {{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].VALUE}} }
+              - {{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].VALUE}}:
+                  {{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].SUBVALUE}}
+{% endif %}
 {% endfor %}
         Check:
         - '{{ASSOCIATION[z].PARAMETERS.CHECK}}'
