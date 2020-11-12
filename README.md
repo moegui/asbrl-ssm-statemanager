@@ -42,29 +42,38 @@ Example Playbook
 ----------------
 
           
-      - NAME: MasterNode{{ReleaseName}}
-        EXTRA_TARGETS:
-        - KEY: tag:ES-MASTER
-          VALUES:
-          - true
-        DOCUMENT_NAME: AWS-ApplyAnsiblePlaybooks
-        PARAMETERS:
-          SOURCE_TYPE: S3
-          INSTALL_DEPENDENCIES: False
-          PLAYBOOK_FILE: deploy-node-prod.yml
-          EXTRA_VARS:
-          - KEY: DISCOVERY_SEED_PROVIDERS
-            VALUE: ec2
-          - KEY: DISCOVERY_EC2_TAG_NAME
-            VALUE: ClusterName
-          - KEY: DISCOVERY_EC2_TAG_VALUE
-            VALUE: ${ClusterName}
-          - KEY: CODEBUILD_BUCKET
-            VALUE: BucketName
-            SUBVALUE: "Fn::ImportValue: !Sub ${ClusterName}-ArtifactsBucket"
-          CHECK: False
-          VERBOSE: -v
-            
+      - name: Generate {{EnvironmentType}} cf-ssm
+        include_role:
+          name: asbrl-ssm-statemanager
+          vars:
+            TEMPLATE_DEST: ./artifacts/{{EnvironmentType}}/cf-elasticstack-ssm.yml
+            TAGS:
+              RELEASE: "{{Release}}"
+              ENVIRONMENT_TYPE: "{{EnvironmentType}}"
+            ASSOCIATION
+            - NAME: MasterNode{{ReleaseName}}
+              EXTRA_TARGETS:
+              - KEY: tag:ES-MASTER
+                VALUES:
+                - true
+              DOCUMENT_NAME: AWS-ApplyAnsiblePlaybooks
+              PARAMETERS:
+                SOURCE_TYPE: S3
+                INSTALL_DEPENDENCIES: False
+                PLAYBOOK_FILE: deploy-node-prod.yml
+                EXTRA_VARS:
+                - KEY: DISCOVERY_SEED_PROVIDERS
+                  VALUE: ec2
+                - KEY: DISCOVERY_EC2_TAG_NAME
+                  VALUE: ClusterName
+                - KEY: DISCOVERY_EC2_TAG_VALUE
+                  VALUE: ${ClusterName}
+                - KEY: CODEBUILD_BUCKET
+                  VALUE: BucketName
+                  SUBVALUE: "Fn::ImportValue: !Sub ${ClusterName}-ArtifactsBucket"
+                CHECK: False
+                VERBOSE: -v
+          
 License
 -------
 
