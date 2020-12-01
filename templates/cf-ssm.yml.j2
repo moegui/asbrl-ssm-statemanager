@@ -45,10 +45,11 @@ Resources:
       - Key: tag:ClusterName  
         Values: 
           - !Ref "ClusterName"
+{% if ASSOCIATIONS[z].EXTRA_TARGETS is defined %}
 {% for y in range(0,ASSOCIATIONS[z].EXTRA_TARGETS|length) %}
       - Key: {{ASSOCIATIONS[z].EXTRA_TARGETS[y].KEY}}
         Values: 
-          {{ASSOCIATIONS[z].EXTRA_TARGETS[y].VALUES|to_nice_yaml}}{% endfor %}
+          {{ASSOCIATIONS[z].EXTRA_TARGETS[y].VALUES|to_nice_yaml}}{% endfor %}{% endif %}
       Parameters:
         SourceType:
         - '{{ASSOCIATIONS[z].PARAMETERS.SOURCE_TYPE}}'
