@@ -6,18 +6,22 @@ Parameters:
     Type: String
   ClusterName:
     Type: String
-{% for z in range(0,ASSOCIATION|length) %}
-{% if ASSOCIATION[z].DOCUMENT_NAME == 'AWS-ApplyAnsiblePlaybooks' %}
+{% for z in range(0,ASSOCIATIONS|length) %}
+{% if ASSOCIATIONS[z].DOCUMENT_NAME == 'AWS-ApplyAnsiblePlaybooks' %}
   S3TemplateAnsible:
     Type: String
 {% break %}
 {% endif %}
 {% endfor %}
-  Build:
-    Type: String
   SystemsManagerTimeout:
     Type: Number
-    
+{% if PARAMETERS is defined %}
+{% for z in range(0,PARAMETERS|length) %}
+  {{PARAMETERS[z].NAME}}:
+    Type: {{PARAMETERS[z].TYPE}}
+{% endfor %}
+{% endif %}
+
 Resources:
 
   SSMOutputBucket:
@@ -31,51 +35,51 @@ Resources:
         - Key: Environment
           Value: {{TAGS.ENVIRONMENT_TYPE}} 
 
-{% for z in range(0,ASSOCIATION|length) %}
-  Association{{ASSOCIATION[z].NAME}}:
+{% for z in range(0,ASSOCIATIONS|length) %}
+  Association{{ASSOCIATIONS[z].NAME}}:
     Type: AWS::SSM::Association
     Properties:
-      AssociationName: !Sub "${Prefix}-${ClusterName}-ssm-{{ASSOCIATION[z].NAME|lower}}"
-      Name: {{ASSOCIATION[z].DOCUMENT_NAME}}
+      AssociationName: !Sub "${Prefix}-${ClusterName}-ssm-{{ASSOCIATIONS[z].NAME|lower}}"
+      Name: {{ASSOCIATIONS[z].DOCUMENT_NAME}}
       Targets:
       - Key: tag:ClusterName  
         Values: 
           - !Ref "ClusterName"
-{% for y in range(0,ASSOCIATION[z].EXTRA_TARGETS|length) %}
-      - Key: {{ASSOCIATION[z].EXTRA_TARGETS[y].KEY}}
+{% for y in range(0,ASSOCIATIONS[z].EXTRA_TARGETS|length) %}
+      - Key: {{ASSOCIATIONS[z].EXTRA_TARGETS[y].KEY}}
         Values: 
-          {{ASSOCIATION[z].EXTRA_TARGETS[y].VALUES|to_nice_yaml}}{% endfor %}
+          {{ASSOCIATIONS[z].EXTRA_TARGETS[y].VALUES|to_nice_yaml}}{% endfor %}
       Parameters:
         SourceType:
-        - '{{ASSOCIATION[z].PARAMETERS.SOURCE_TYPE}}'
+        - '{{ASSOCIATIONS[z].PARAMETERS.SOURCE_TYPE}}'
         SourceInfo:
         - Fn::Sub: '{"path":"${S3TemplateAnsible}"}'
         InstallDependencies:
-        - '{{ASSOCIATION[z].PARAMETERS.INSTALL_DEPENDENCIES}}'
+        - '{{ASSOCIATIONS[z].PARAMETERS.INSTALL_DEPENDENCIES}}'
         PlaybookFile:
-        - '{{ASSOCIATION[z].PARAMETERS.PLAYBOOK_FILE}}'
+        - '{{ASSOCIATIONS[z].PARAMETERS.PLAYBOOK_FILE}}'
         ExtraVariables:
         - Fn::Join:
           - ' '
           - - SSM=True
-{% for y in range(0,ASSOCIATION[z].PARAMETERS.EXTRA_VARS|length) %}
-{% if ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].SUBVALUE is not defined %}
-            - Fn::Sub: {{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].KEY}}={{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].VALUE}}
+{% for y in range(0,ASSOCIATIONS[z].PARAMETERS.EXTRA_VARS|length) %}
+{% if ASSOCIATIONS[z].PARAMETERS.EXTRA_VARS[y].SUBVALUE is not defined %}
+            - Fn::Sub: {{ASSOCIATIONS[z].PARAMETERS.EXTRA_VARS[y].KEY}}={{ASSOCIATIONS[z].PARAMETERS.EXTRA_VARS[y].VALUE}}
 {% else %}
             - Fn::Sub:
-              - {{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].KEY}}=${ {{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].VALUE}} }
-              - {{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].VALUE}}:
-                  {{ASSOCIATION[z].PARAMETERS.EXTRA_VARS[y].SUBVALUE}}
+              - {{ASSOCIATIONS[z].PARAMETERS.EXTRA_VARS[y].KEY}}=${ {{ASSOCIATIONS[z].PARAMETERS.EXTRA_VARS[y].VALUE}} }
+              - {{ASSOCIATIONS[z].PARAMETERS.EXTRA_VARS[y].VALUE}}:
+                  {{ASSOCIATIONS[z].PARAMETERS.EXTRA_VARS[y].SUBVALUE}}
 {% endif %}
 {% endfor %}
         Check:
-        - '{{ASSOCIATION[z].PARAMETERS.CHECK}}'
+        - '{{ASSOCIATIONS[z].PARAMETERS.CHECK}}'
         Verbose:
-        - '{{ASSOCIATION[z].PARAMETERS.VERBOSE}}'
+        - '{{ASSOCIATIONS[z].PARAMETERS.VERBOSE}}'
       OutputLocation:
         S3Location: 
           OutputS3BucketName: !Ref "SSMOutputBucket"
-          OutputS3KeyPrefix: "{{ASSOCIATION[z].NAME}}Association"
+          OutputS3KeyPrefix: "{{ASSOCIATIONS[z].NAME}}Association"
           OutputS3Region: !Ref "AWS::Region"
       WaitForSuccessTimeoutSeconds: !Ref "SystemsManagerTimeout"
 {% endfor %}
