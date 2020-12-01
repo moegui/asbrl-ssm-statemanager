@@ -80,7 +80,7 @@ Example Playbook
 License
 -------
 
-BSD
+GPL-3.0-only
 
 Author Information
 ------------------
