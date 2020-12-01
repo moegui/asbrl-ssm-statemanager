@@ -16,7 +16,10 @@ Role Variables
 - TAGS:
     - RELEASE: (String)
     - ENVIRONMENT_TYPE: (String)
-- ASSOCIATION: (List)
+- PARAMETERS: (List)
+  - NAME: (String)
+  - TYPE: (String)
+- ASSOCIATIONS: (List)
   - NAME: (String)
   - EXTRA_TARGETS: (List)
     - Key: (String)
@@ -77,7 +80,7 @@ Example Playbook
 License
 -------
 
-BSD
+GPL-3.0-only
 
 Author Information
 ------------------
